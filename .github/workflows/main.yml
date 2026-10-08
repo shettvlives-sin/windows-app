@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  pc_windows_app:
+    image: lscr.io/linuxserver/webtop:ubuntu-xfce
+    container_name: pc_virtual_codespace
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Sao_Paulo
+      - CUSTOM_USER=admin
+      - PASSWORD=MinhaSenhaSegura123 # 🔐 Sua senha persistente
+    ports:
+      - "3389:3389"
+    volumes:
+      - ./.dados_do_pc:/config
+    restart: unless-stopped
+
+  vpn_ip_fixo:
+    image: tailscale/tailscale:latest
+    container_name: tailscale_tunnel
+    volumes:
+      - ./.dados_tailscale:/var/lib/tailscale # Salva a identidade da VPN
+      - /dev/net/tun:/dev/net/tun # Permissão de rede
+    network_mode: "service:pc_windows_app" # Une a rede do Tailscale com a do seu PC
+    environment:
+      - TS_AUTHKEY=tskey-auth-SUA_CHAVE_AQUI # 🔑 COLE SUA AUTH KEY DO TAILSCALE AQUI
+      - TS_STATEFUL=true
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    restart: unless-stopped
